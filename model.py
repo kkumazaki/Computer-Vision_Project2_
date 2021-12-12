@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class EncoderCNN(nn.Module):
     def __init__(self, embed_size):
@@ -28,6 +29,7 @@ class DecoderRNN(nn.Module):
 
         # initialize hidden size
         self.hidden_size = hidden_size
+        self.device = device
 
         # embedding layer that turns words into a vector of a specified size
         self.embed = nn.Embedding(vocab_size, embed_size)
@@ -45,8 +47,8 @@ class DecoderRNN(nn.Module):
            there will be none because the hidden state is formed based on perviously seen data.
            So, this function defines a hidden state with all zeroes and of a specified size.'''
         # The axes dimensions are (n_layers, batch_size, hidden_dim)
-        return (torch.zeros(1, batch_size, self.hidden_size),
-                torch.zeros(1, batch_size, self.hidden_size))
+        return (torch.zeros(1, batch_size, self.hidden_size, device=device),
+                torch.zeros(1, batch_size, self.hidden_size, device=device))
 
     
     def forward(self, features, captions):
@@ -59,8 +61,8 @@ class DecoderRNN(nn.Module):
         # the lstm takes in our embeddings and hiddent state
         self.hidden = self.init_hidden(features.shape[0])
         lstm_out, self.hidden = self.lstm(embeds, self.hidden) 
-        hidden = self.init_hidden(features.shape[0])
-        lstm_out, self.hidden = self.lstm(embeds, hidden)      
+        #hidden = self.init_hidden(features.shape[0])
+        #lstm_out, self.hidden = self.lstm(embeds, hidden)      
 
         # output
         output = self.linear(lstm_out)
